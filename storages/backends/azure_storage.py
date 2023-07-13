@@ -279,7 +279,16 @@ class AzureStorage(BaseStorage):
         properties = blob_client.get_blob_properties(timeout=self.timeout)
         return properties.size
 
-    def _save(self, name, content):
+    def _save(self, name, content, metadata=None):
+        components = name.split("/")
+
+        # Extract the metadata
+        metadata = {
+            "uuid": components[1],
+            "workstream_id": components[2],
+            "folder_id": components[3],
+            "file_id": components[4]
+        }
         cleaned_name = clean_name(name)
         name = self._get_valid_path(name)
         params = self._get_content_settings_parameters(name, content)
@@ -295,7 +304,8 @@ class AzureStorage(BaseStorage):
             content_settings=ContentSettings(**params),
             max_concurrency=self.upload_max_conn,
             timeout=self.timeout,
-            overwrite=self.overwrite_files)
+            overwrite=self.overwrite_files,
+            metadata=metadata)
         return cleaned_name
 
     def _expire_at(self, expire):
